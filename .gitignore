@@ -9,3 +9,17 @@
 /Output/debug/*.pdb
 
 /Output/debug/*.exe
+
+/Output/release/*.pdb
+
+/Source/Console/*.user
+
+/Source/debug/*.ilk
+/Output/release/*.exe
+
+/Output/debug/*.lib
+
+/Output/debug/*.exp
+/Output/debug/Console.dll
+
+/Output/release/Console.dll

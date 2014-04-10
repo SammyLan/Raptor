@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="ConsoleTest"
-	ProjectGUID="{4B9D9290-BEF1-45DA-AD08-1DB6A2C17B31}"
-	RootNamespace="ConsoleTest"
+	Name="Console"
+	ProjectGUID="{0B2D42D6-A8C0-4104-A284-E1CEBEBFF4B4}"
+	RootNamespace="Console"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -17,8 +17,9 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			ConfigurationType="1"
+			ConfigurationType="2"
 			InheritedPropertySheets="..\Props\Global.vsprops"
+			UseOfATL="1"
 			CharacterSet="1"
 			>
 			<Tool
@@ -39,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CONSOLE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -61,7 +62,7 @@
 				Name="VCLinkerTool"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				SubSystem="1"
+				SubSystem="2"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -91,7 +92,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			ConfigurationType="1"
+			ConfigurationType="2"
 			InheritedPropertySheets="..\Props\Global.vsprops"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -113,7 +114,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CONSOLE_EXPORTS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -133,7 +134,7 @@
 				Name="VCLinkerTool"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
-				SubSystem="1"
+				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"
@@ -173,7 +174,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\ConsoleTest.cpp"
+				RelativePath=".\Console.cpp"
 				>
 			</File>
 			<File
@@ -212,6 +213,46 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
+		</Filter>
+		<Filter
+			Name="UtilConsole"
+			>
+			<File
+				RelativePath=".\UtilConsole\ConsoleWnd.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\UtilConsole\ConsoleWnd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UtilConsole\MsgOnlyWnd.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\UtilConsole\MsgOnlyWnd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UtilConsole\RaptThreadPool.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UtilConsole\UtilConsole.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\UtilConsole\UtilConsole.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UtilConsole\UtilConsoleDef.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UtilConsole\UtilDef.h"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"
