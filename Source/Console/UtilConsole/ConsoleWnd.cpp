@@ -101,7 +101,7 @@ BOOL CConsoleWnd::OnExit()
 
 void CConsoleWnd::ProcessCmd(CString const & strCmd)
 {	
-	WriteString(_T("Process Command:%s"),(LPCTSTR)strCmd);
+	WriteString(_T("Process Command:%s test"),(LPCTSTR)strCmd);
 }
 
 LRESULT CConsoleWnd::OnMessageCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -109,8 +109,17 @@ LRESULT CConsoleWnd::OnMessageCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	if (uMsg == WM_CONSOLE_MESSAGE)
 	{
 		TCHAR * pBuf = (TCHAR *) lParam;
-		ProcessCmd(pBuf);		
-		WritePrompt(FALSE);
+		if (wParam > 0)
+		{
+			ProcessCmd(pBuf);
+			WritePrompt(TRUE);
+		}
+		else
+		{
+			WritePrompt(FALSE);
+		}
+			
+		
 		delete [] pBuf;
 	}
 	return S_OK;
@@ -266,8 +275,12 @@ void CConsoleWnd::ConsoleReadThreadProc()
 				DWORD const SIZE = 1024;
 				TCHAR	*pBuf = new TCHAR[SIZE];
 				
-				if (::ReadConsole(hStdIn_, pBuf, SIZE * sizeof(TCHAR), &dwRead, NULL))
+				if (::ReadConsole(hStdIn_, pBuf, SIZE , &dwRead, NULL))
 				{
+					if (dwRead >= 2 && pBuf[dwRead -2] == _T('\r'))
+					{
+						dwRead -= 2;
+					}
 					bReading_ = FALSE;
 					pBuf[dwRead] = _T('\0');
 					if (bConsoleReadThreadCont_)

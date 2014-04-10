@@ -7,6 +7,10 @@
 	IntermediateDirectory="$(TempRoot)$(ConfigurationName)\$(ProjectName)\"
 	>
 	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="$(SolutionDir);3rdRoot;"
+	/>
+	<Tool
 		Name="VCLinkerTool"
 		AdditionalLibraryDirectories="$(OutDir)"
 	/>
