@@ -11,6 +11,27 @@ namespace
 	{
 	}
 }
+
+auto_ptr<CConsoleWnd> CConsoleWnd::s_pConsolWnd;
+
+CConsoleWnd * CConsoleWnd::CreateInstance()
+{
+	return GetInstance();
+}
+
+CConsoleWnd * CConsoleWnd::GetInstance()
+{
+	if (s_pConsolWnd.get() == NULL)
+	{
+		s_pConsolWnd.reset(new CConsoleWnd());
+	}
+	return s_pConsolWnd.get();
+}
+
+void CConsoleWnd::DestoryInstance()
+{
+	s_pConsolWnd.reset(NULL);
+}
 CConsoleWnd::CConsoleWnd()
 :hStdIn_(NULL)
 ,hStdOut_(NULL)
@@ -56,6 +77,7 @@ BOOL CConsoleWnd::OnInit()
 		hConsoleReadThread_ = Raptor::Util::HRTXCreateThread(this,&THIS_CLASS::ConsoleReadThreadProc);
 		WritePrompt(FALSE);
 		bRet = TRUE;
+		::SetConsoleCtrlHandler(&THIS_CLASS::HandlerRoutine,TRUE);
 	}while (FALSE);
 	return bRet;
 }
@@ -79,8 +101,7 @@ BOOL CConsoleWnd::OnExit()
 
 void CConsoleWnd::ProcessCmd(CString const & strCmd)
 {	
-	Sleep(10000);
-	WriteString(strCmd);
+	WriteString(_T("Process Command:%s"),(LPCTSTR)strCmd);
 }
 
 LRESULT CConsoleWnd::OnMessageCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -108,17 +129,17 @@ void CConsoleWnd::WritePrompt(BOOL bCRLF)
 	}
 }
 
-void CConsoleWnd::WriteString(LPCTSTR lpszFormat, ...)
+BOOL CConsoleWnd::WriteString(LPCTSTR lpszFormat, ...)
 {
 	va_list arglist;
 	va_start(arglist, lpszFormat);
 	CString str;
 	str.FormatV(lpszFormat, arglist);
 	va_end(arglist);
-	DoWriteString(str);
+	return DoWriteString(str);
 }
 
-void CConsoleWnd::DoWriteString(const CString & str)
+BOOL CConsoleWnd::DoWriteString(const CString & str)
 {
 	/// -# 如果处于输入状态,备份输入开始位置到当前输入位置所在行的数据
 	CHAR_INFO *pBackupBlock = NULL;
@@ -182,7 +203,7 @@ void CConsoleWnd::DoWriteString(const CString & str)
 	if (bResult)
 	{
 		// 如果输出文本最后并非换行，强制换行
-		if (str.Right(2).Find(_T('\n')) == -1)
+		if (str!=s_strPrompt &&  str.Right(2).Find(_T('\n')) == -1)
 		{
 			::WriteConsole(hStdOut_, _T("\r\n"), 2, &dwWritten, NULL);
 		}		
@@ -213,8 +234,9 @@ void CConsoleWnd::DoWriteString(const CString & str)
 		}
 
 		delete[]pBackupBlock;
-		pBackupBlock = NULL;
+		pBackupBlock = NULL;		
 	}
+	return bReading_;
 }
 
 void CConsoleWnd::ConsoleReadThreadProc()
@@ -275,4 +297,13 @@ void CConsoleWnd::ConsoleReadThreadProc()
 			hStdIn_ = ::GetStdHandle(STD_INPUT_HANDLE);
 		}
 	}
+}
+
+BOOL CConsoleWnd::HandlerRoutine(  DWORD dwCtrlType)
+{
+	if (dwCtrlType == CTRL_CLOSE_EVENT)
+	{	
+		MessageBox(NULL,_T("程序将退出,请关闭主程序后点击确定那妞退出"),_T("提示"),MB_OK);
+	}
+	return TRUE;
 }

@@ -1,7 +1,4 @@
-/Source/ConsoleTest/*.user
 /Source/ConsoleTest/Debug
-/Source/*.ncb
-/Source/*.suo
 /Temp
 
 /Output/debug/*.ilk
@@ -12,7 +9,6 @@
 
 /Output/release/*.pdb
 
-/Source/Console/*.user
 
 /Source/debug/*.ilk
 /Output/release/*.exe
@@ -23,3 +19,7 @@
 /Output/debug/Console.dll
 
 /Output/release/Console.dll
+
+*.user
+*.suo
+*.ncb

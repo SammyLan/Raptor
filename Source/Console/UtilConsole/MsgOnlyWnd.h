@@ -8,7 +8,7 @@ public:
 	LRESULT SendMessage(UINT Msg,WPARAM wParam,LPARAM lParam);
 protected:
 	CMsgOnlyWnd();
-	~CMsgOnlyWnd();
+	virtual ~CMsgOnlyWnd() = 0;
 	virtual BOOL OnInit();
 	virtual BOOL OnExit();
 	virtual LRESULT OnMessageCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;
