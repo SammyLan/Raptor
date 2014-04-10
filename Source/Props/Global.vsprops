@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="gb2312"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="Global"
+	OutputDirectory="$(OutputRoot)$(ConfigurationName)"
+	IntermediateDirectory="$(TempRoot)$(ConfigurationName)\$(ProjectName)\"
+	>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalLibraryDirectories="$(OutDir)"
+	/>
+	<UserMacro
+		Name="RaptorRoot"
+		Value="$(SolutionDir)..\"
+		PerformEnvironmentSet="true"
+	/>
+	<UserMacro
+		Name="3rdRoot"
+		Value="$(RaptorRoot)3rd\"
+		PerformEnvironmentSet="true"
+	/>
+	<UserMacro
+		Name="TempRoot"
+		Value="$(RaptorRoot)Temp\"
+	/>
+	<UserMacro
+		Name="OutputRoot"
+		Value="$(RaptorRoot)Output\"
+	/>
+</VisualStudioPropertySheet>

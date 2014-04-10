@@ -1,0 +1,11 @@
+/Source/ConsoleTest/*.user
+/Source/ConsoleTest/Debug
+/Source/*.ncb
+/Source/*.suo
+/Temp
+
+/Output/debug/*.ilk
+
+/Output/debug/*.pdb
+
+/Output/debug/*.exe
