@@ -157,22 +157,21 @@ BOOL CConsoleWnd::DoWriteString(const CString & str)
 	COORD curPos;
 
 	if (bReading_)
-	{		
-		CONSOLE_SCREEN_BUFFER_INFO csbiStartPos = csbiReadStartPos_;
+	{
 		CONSOLE_SCREEN_BUFFER_INFO csbiCur;
 		if (::GetConsoleScreenBufferInfo(hStdOut_, &csbiCur))
 		{		
 			curPos = csbiCur.dwCursorPosition;
 			crdBackupBufSize.X = csbiCur.dwMaximumWindowSize.X;
-			crdBackupBufSize.Y = (csbiCur.dwCursorPosition.Y - csbiStartPos.dwCursorPosition.Y) + 1;
+			crdBackupBufSize.Y = (curPos.Y - startPos_.Y) + 1;
 
 			COORD crdBuf = {0,0};
 
 			SMALL_RECT srcReg;
-			srcReg.Left = 0;
-			srcReg.Top = csbiStartPos.dwCursorPosition.Y;
+			srcReg.Left = startPos_.X;
+			srcReg.Top = startPos_.Y;
 			srcReg.Right = csbiCur.dwMaximumWindowSize.X;
-			srcReg.Bottom = csbiCur.dwCursorPosition.Y;
+			srcReg.Bottom = curPos.Y;
 
 			pBackupBlock = new CHAR_INFO[crdBackupBufSize.X * crdBackupBufSize.Y];
 			::ZeroMemory(pBackupBlock, crdBackupBufSize.X * crdBackupBufSize.Y * sizeof(CHAR_INFO));
@@ -237,7 +236,7 @@ BOOL CConsoleWnd::DoWriteString(const CString & str)
 				COORD crdLast;
 				crdLast.X = curPos.X;
 				crdLast.Y = srcReg.Bottom;
-				csbiReadStartPos_.dwCursorPosition.Y += crdLast.Y - curPos.Y;
+				startPos_.Y += crdLast.Y - curPos.Y;
 				bResult = ::SetConsoleCursorPosition(hStdOut_, crdLast);
 			}
 		}
@@ -268,8 +267,11 @@ void CConsoleWnd::ConsoleReadThreadProc()
 			if (inp[0].EventType == KEY_EVENT)
 			{
 				bReading_ = TRUE;
-				::ZeroMemory(&csbiReadStartPos_, sizeof(csbiReadStartPos_));
-				::GetConsoleScreenBufferInfo(hStdOut_, &csbiReadStartPos_);
+				CONSOLE_SCREEN_BUFFER_INFO curPos;
+				::ZeroMemory(&curPos, sizeof(curPos));
+				::GetConsoleScreenBufferInfo(hStdOut_, &curPos);
+				startPos_ = curPos.dwCursorPosition;
+				startPos_.X = 0;
 
 				// 收到Key Event，那就集齐一行的新信息，放入命令缓冲，并通知主线程分发处理
 				DWORD const SIZE = 1024;
