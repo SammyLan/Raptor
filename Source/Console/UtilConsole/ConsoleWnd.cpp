@@ -54,7 +54,7 @@ BOOL CConsoleWnd::OnInit()
 		{
 			break;
 		}
-		if (NULL == ::freopen("CONIN$","r",stdin))
+		/*if (NULL == ::freopen("CONIN$","r",stdin))
 		{
 			break;
 		}
@@ -62,7 +62,7 @@ BOOL CConsoleWnd::OnInit()
 		if (NULL == ::freopen("CONOUT$","w",stdout))
 		{
 			break;
-		}
+		}*/
 
 		::SetConsoleTitle(_T("IMConsole"));
 		hStdIn_= GetStdHandle(STD_INPUT_HANDLE);
@@ -275,7 +275,7 @@ void CConsoleWnd::ConsoleReadThreadProc()
 				DWORD const SIZE = 1024;
 				TCHAR	*pBuf = new TCHAR[SIZE];
 				
-				if (::ReadConsole(hStdIn_, pBuf, SIZE , &dwRead, NULL))
+				if (::ReadConsole(hStdIn_, pBuf, SIZE , &dwRead, NULL) && dwRead > 0)
 				{
 					if (dwRead >= 2 && pBuf[dwRead -2] == _T('\r'))
 					{
@@ -286,14 +286,15 @@ void CConsoleWnd::ConsoleReadThreadProc()
 					if (bConsoleReadThreadCont_)
 					{
 						BASE_CLASS::PostMessage(WM_CONSOLE_MESSAGE,dwRead,(LPARAM)pBuf);
+						pBuf = NULL;
 					}
 				}
-				if (!bConsoleReadThreadCont_)
+				bReading_ = FALSE;
+				if (pBuf != NULL)
 				{
 					delete [] pBuf;
-					break;
+					pBuf = NULL;
 				}
-				bReading_ = FALSE;
 			}
 			else
 			{
@@ -301,7 +302,7 @@ void CConsoleWnd::ConsoleReadThreadProc()
 				::ReadConsoleInput(hStdIn_, &inp[0], 1, &dwRead);
 			}
 		}
-		if (dwRet == WAIT_IO_COMPLETION)
+		else if (dwRet == WAIT_IO_COMPLETION)
 		{
 			break;
 		}
