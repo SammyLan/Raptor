@@ -23,3 +23,10 @@
 *.user
 *.suo
 *.ncb
+/Output/debug/Common.dll
+
+/Output/release/Common.dll
+
+/Output/release/*.lib
+
+/Output/release/*.exp

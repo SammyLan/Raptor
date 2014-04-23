@@ -4,11 +4,17 @@ Microsoft Visual Studio Solution File, Format Version 9.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleTest", "ConsoleTest\ConsoleTest.vcproj", "{4B9D9290-BEF1-45DA-AD08-1DB6A2C17B31}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Console", "Console\Console.vcproj", "{0B2D42D6-A8C0-4104-A284-E1CEBEBFF4B4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D48B0D28-6507-4418-866E-DACF6CD29AF3} = {D48B0D28-6507-4418-866E-DACF6CD29AF3}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowsTest", "WindowsTest\WindowsTest.vcproj", "{2EE0C625-4D20-4274-9399-E7D1A92FD34A}"
 	ProjectSection(ProjectDependencies) = postProject
 		{0B2D42D6-A8C0-4104-A284-E1CEBEBFF4B4} = {0B2D42D6-A8C0-4104-A284-E1CEBEBFF4B4}
+		{D48B0D28-6507-4418-866E-DACF6CD29AF3} = {D48B0D28-6507-4418-866E-DACF6CD29AF3}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcproj", "{D48B0D28-6507-4418-866E-DACF6CD29AF3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,6 +34,10 @@ Global
 		{2EE0C625-4D20-4274-9399-E7D1A92FD34A}.Debug|Win32.Build.0 = Debug|Win32
 		{2EE0C625-4D20-4274-9399-E7D1A92FD34A}.Release|Win32.ActiveCfg = Release|Win32
 		{2EE0C625-4D20-4274-9399-E7D1A92FD34A}.Release|Win32.Build.0 = Release|Win32
+		{D48B0D28-6507-4418-866E-DACF6CD29AF3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D48B0D28-6507-4418-866E-DACF6CD29AF3}.Debug|Win32.Build.0 = Debug|Win32
+		{D48B0D28-6507-4418-866E-DACF6CD29AF3}.Release|Win32.ActiveCfg = Release|Win32
+		{D48B0D28-6507-4418-866E-DACF6CD29AF3}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

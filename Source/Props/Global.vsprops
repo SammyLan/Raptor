@@ -4,7 +4,7 @@
 	Version="8.00"
 	Name="Global"
 	OutputDirectory="$(OutputRoot)$(ConfigurationName)"
-	IntermediateDirectory="$(TempRoot)$(ConfigurationName)\$(ProjectName)\"
+	IntermediateDirectory="$(TempRoot)$(ConfigurationName)\$(ProjectName)"
 	>
 	<Tool
 		Name="VCCLCompilerTool"
