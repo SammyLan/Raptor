@@ -4,7 +4,7 @@ using std::vector;
 class StackWalker
 {
 public:
-	StackWalker(CONTEXT const & context);
+	StackWalker(CONTEXT * pContext);
 	~StackWalker();
 	void DumpStack();
 protected:
@@ -16,7 +16,7 @@ private:
 private:
 	HANDLE hProcess_;
 	HANDLE hThread_;
-	CONTEXT context_;
+	CONTEXT * pContext_;
 	vector<DWORD64> callStack_;
 };
 

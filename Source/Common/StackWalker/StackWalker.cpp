@@ -35,9 +35,9 @@ namespace{
 }
 
 
-StackWalker::StackWalker(CONTEXT const &context)
-{
-	memcpy(&context_,&context,sizeof(context));	
+StackWalker::StackWalker(CONTEXT * pContext)
+:pContext_(pContext)
+{	
 	hProcess_ = GetCurrentProcess();
 	hThread_ = GetCurrentThread();
 	SaveStackInfo();
@@ -75,29 +75,29 @@ void StackWalker::SaveStackInfo()
 #ifdef _M_IX86
 	// normally, call ImageNtHeader() and use machine info from PE header
 	imageType = IMAGE_FILE_MACHINE_I386;
-	stackFrame.AddrPC.Offset = context_.Eip;
+	stackFrame.AddrPC.Offset = pContext_->Eip;
 	stackFrame.AddrPC.Mode = AddrModeFlat;
-	stackFrame.AddrFrame.Offset = context_.Ebp;
+	stackFrame.AddrFrame.Offset = pContext_->Ebp;
 	stackFrame.AddrFrame.Mode = AddrModeFlat;
-	stackFrame.AddrStack.Offset = context_.Esp;
+	stackFrame.AddrStack.Offset = pContext_->Esp;
 	stackFrame.AddrStack.Mode = AddrModeFlat;
 #elif _M_X64
 	imageType = IMAGE_FILE_MACHINE_AMD64;
-	stackFrame.AddrPC.Offset = context_.Rip;
+	stackFrame.AddrPC.Offset = pContext_->Rip;
 	stackFrame.AddrPC.Mode = AddrModeFlat;
-	stackFrame.AddrFrame.Offset = context_.Rsp;
+	stackFrame.AddrFrame.Offset = pContext_->Rsp;
 	stackFrame.AddrFrame.Mode = AddrModeFlat;
-	stackFrame.AddrStack.Offset = context_.Rsp;
+	stackFrame.AddrStack.Offset = pContext_->Rsp;
 	stackFrame.AddrStack.Mode = AddrModeFlat;
 #elif _M_IA64
 	imageType = IMAGE_FILE_MACHINE_IA64;
-	stackFrame.AddrPC.Offset = context_.StIIP;
+	stackFrame.AddrPC.Offset = pContext_->StIIP;
 	stackFrame.AddrPC.Mode = AddrModeFlat;
-	stackFrame.AddrFrame.Offset = context_.IntSp;
+	stackFrame.AddrFrame.Offset = pContext_->IntSp;
 	stackFrame.AddrFrame.Mode = AddrModeFlat;
-	stackFrame.AddrBStore.Offset = context_.RsBSP;
+	stackFrame.AddrBStore.Offset = pContext_->RsBSP;
 	stackFrame.AddrBStore.Mode = AddrModeFlat;
-	stackFrame.AddrStack.Offset = context_.IntSp;
+	stackFrame.AddrStack.Offset = pContext_->IntSp;
 	stackFrame.AddrStack.Mode = AddrModeFlat;
 #else
 #error "Platform not supported!"
@@ -107,7 +107,7 @@ void StackWalker::SaveStackInfo()
 	int dwSize = 30;
 	for (int i = 0; i < dwSize; ++i)
 	{
-		if(!StackWalk64(imageType,hProcess_,hThread_,&stackFrame,&context_, NULL/*ReadProcessMemoryProc64*/,FunctionTableAccessProc64, GetModuleBaseProc64,NULL/*TranslateAddressProc64*/))
+		if(!StackWalk64(imageType,hProcess_,hThread_,&stackFrame,NULL, NULL/*ReadProcessMemoryProc64*/,FunctionTableAccessProc64, GetModuleBaseProc64,NULL/*TranslateAddressProc64*/))
 		{
 			break;			 
 		}
@@ -193,7 +193,7 @@ void StackWalker::DumpStack()
 
 DWORD AssertionExceptionDump(PEXCEPTION_POINTERS Exception)
 {
-	StackWalker walker(*(Exception->ContextRecord));
+	StackWalker walker(Exception->ContextRecord);
 	walker.DumpStack();
 
 	return EXCEPTION_EXECUTE_HANDLER;
