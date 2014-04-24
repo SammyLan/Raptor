@@ -107,7 +107,7 @@ void StackWalker::SaveStackInfo()
 	int dwSize = 30;
 	for (int i = 0; i < dwSize; ++i)
 	{
-		if(!StackWalk64(imageType,hProcess_,hThread_,&stackFrame,NULL, NULL/*ReadProcessMemoryProc64*/,FunctionTableAccessProc64, GetModuleBaseProc64,NULL/*TranslateAddressProc64*/))
+		if(!StackWalk64(imageType,hProcess_,hThread_,&stackFrame, pContext_,NULL/*ReadProcessMemoryProc64*/,FunctionTableAccessProc64, GetModuleBaseProc64,NULL/*TranslateAddressProc64*/))
 		{
 			break;			 
 		}
@@ -121,21 +121,21 @@ void StackWalker::SaveStackInfo()
 	}
 }
 
-void StackWalker::PrintLineInfo(PCHAR fileName,DWORD dwLine,PCHAR funcName,DWORD dwAddr)
+void StackWalker::PrintLineInfo(PCHAR fileName,DWORD dwLine,PCHAR funcName,DWORD64 dwAddr)
 {
 	if (funcName == NULL)
 	{
 		funcName = "<unknown>";
 	}
-	DWORD dwBaseAddr = SymGetModuleBase(hProcess_,dwAddr);
-	DWORD dwRVAOffset = dwAddr - dwBaseAddr;
+	DWORD64 dwBaseAddr = SymGetModuleBase64(hProcess_,dwAddr);
+	DWORD64 dwRVAOffset = dwAddr - dwBaseAddr;
 	TCHAR szModuleName[MAX_PATH];
 	DWORD dwLen = GetModuleBaseName(hProcess_,(HMODULE)dwBaseAddr,szModuleName,sizeof(szModuleName)/sizeof(szModuleName[0]));
 	szModuleName[dwLen] = '\0';
 
 
 	CHAR szLineInfo[MAX_PATH + 512];
-	sprintf_s(szLineInfo,sizeof(szLineInfo)/sizeof(szLineInfo[0]),"0x%08x[0x%06x] %S:%s",dwAddr,dwRVAOffset,szModuleName,funcName);
+	sprintf_s(szLineInfo,sizeof(szLineInfo)/sizeof(szLineInfo[0]),"0x%08I64x[0x%06I64x] %S:%s",dwAddr,dwRVAOffset,szModuleName,funcName);
 
 	if (NULL == fileName)
 	{
@@ -157,14 +157,11 @@ void StackWalker::DumpStack()
 	InitSymbol();
 	for (size_t i = 2; i < callStack_.size();++i)
 	{
-		DWORD dwAddr = (DWORD)callStack_[i];
+		DWORD64 dwAddr = callStack_[i];
 
 		//获取函数名
 		DWORD64  dwDisplacement = 0;
-		ULONG64 buffer[(sizeof(SYMBOL_INFO) +
-			MAX_SYM_NAME*sizeof(TCHAR) +
-			sizeof(ULONG64) - 1) /
-			sizeof(ULONG64)];
+		ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME*sizeof(TCHAR) +	sizeof(ULONG64) - 1) /	sizeof(ULONG64)];
 		PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)buffer;
 
 		pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -172,9 +169,10 @@ void StackWalker::DumpStack()
 
 		if (SymFromAddr(hProcess_, dwAddr, &dwDisplacement, pSymbol))
 		{
-			IMAGEHLP_LINE lineInfo = { sizeof(IMAGEHLP_LINE) };
+			IMAGEHLP_LINE64 lineInfo;
+			lineInfo.SizeOfStruct =  sizeof(IMAGEHLP_LINE64);
 			DWORD dwLineDisplacement;
-			if( SymGetLineFromAddr( hProcess_, dwAddr, &dwLineDisplacement, &lineInfo ))
+			if( SymGetLineFromAddr64( hProcess_, dwAddr, &dwLineDisplacement, &lineInfo ))
 			{
 				PrintLineInfo(lineInfo.FileName,lineInfo.LineNumber,pSymbol->Name,dwAddr);
 			}

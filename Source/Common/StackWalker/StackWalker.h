@@ -8,7 +8,7 @@ public:
 	~StackWalker();
 	void DumpStack();
 protected:
-	virtual void PrintLineInfo(PCHAR fileName,DWORD dwLine, PCHAR funcName,DWORD dwAddr);
+	virtual void PrintLineInfo(PCHAR fileName,DWORD dwLine, PCHAR funcName,DWORD64 dwAddr);
 private:
 	void SaveStackInfo();
 	void InitSymbol();
