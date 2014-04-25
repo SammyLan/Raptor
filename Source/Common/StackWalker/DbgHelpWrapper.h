@@ -1,6 +1,37 @@
 #pragma once
 #include <DbgHelp.h>
 
+
+template<bool> struct StaticAssert_Failed;
+template<> struct StaticAssert_Failed<true>{};
+#define STATIC_ASSERT(exp) (StaticAssert_Failed<(bool)(exp)>())
+
+template <typename Dest,typename Src>
+Dest StaticCast(Src src)
+{
+	STATIC_ASSERT(sizeof(src) == sizeof(Dest));
+	static union
+	{
+		Src src_;
+		Dest dest_;
+	};
+	src_ = src;
+	return dest_;
+}
+
+#define ZeroMemberBegin()	DWORD dwZeroMemberBegin
+#define ZeroMemberEnd()		DWORD dwZeroMemberEnd
+#define ZeroMember()																				\
+do																									\
+{																									\
+	this->dwZeroMemberBegin = 10000;																\
+	this->dwZeroMemberEnd	= 10001;																\
+	BYTE * begin = StaticCast<BYTE*>(&this->dwZeroMemberBegin) + sizeof(this->dwZeroMemberBegin);	\
+	BYTE * end  = StaticCast<BYTE*>(&this->dwZeroMemberEnd);										\
+	memset(begin,0,end - begin);																	\
+} while(0)
+
+
 namespace DbgHelp
 {
 	typedef BOOL (WINAPI *StackWalk64)( 
@@ -19,6 +50,7 @@ namespace DbgHelp
 
 	typedef PVOID (WINAPI * SymFunctionTableAccess64)( HANDLE hProcess, DWORD64 AddrBase );
 
+	typedef BOOL (WINAPI * SymFromAddr)(HANDLE hProcess,DWORD64 Address,PDWORD64 Displacement,PSYMBOL_INFO Symbol);
 	typedef BOOL (WINAPI * SymGetLineFromAddr64)( IN HANDLE hProcess, IN DWORD64 dwAddr,OUT PDWORD pdwDisplacement, OUT PIMAGEHLP_LINE64 Line );
 	typedef BOOL (WINAPI * SymGetSymFromAddr64)( IN HANDLE hProcess, IN DWORD64 dwAddr,OUT PDWORD64 pdwDisplacement, OUT PIMAGEHLP_SYMBOL64 Symbol );
 	typedef BOOL (WINAPI * SymGetModuleInfo64)( IN HANDLE hProcess, IN DWORD64 dwAddr, OUT  PIMAGEHLP_MODULE64 *ModuleInfo );
@@ -42,6 +74,7 @@ namespace DbgHelp
 
 class DbgHelpWrapper
 {
+public:
 	DbgHelpWrapper();
 	~DbgHelpWrapper();
 	BOOL IsDbhHelpDLLLoaded(){return hDbhHelpDLL_ != NULL;}
@@ -50,6 +83,7 @@ private:
 	void	InitFunc();
 	HMODULE hDbhHelpDLL_;
 public:
+	ZeroMemberBegin();
 	DECLARE_Member(StackWalk64);
 
 	DECLARE_Member(SymInitialize);
@@ -57,6 +91,7 @@ public:
 
 	DECLARE_Member(SymFunctionTableAccess64);
 
+	DECLARE_Member(SymFromAddr);
 	DECLARE_Member(SymGetLineFromAddr64);
 	DECLARE_Member(SymGetSymFromAddr64);
 	DECLARE_Member(SymGetModuleInfo64);
@@ -71,4 +106,5 @@ public:
 
 	DECLARE_Member(SymGetSearchPath);
 	DECLARE_Member(SymSetSearchPath);
+	ZeroMemberEnd();
 };

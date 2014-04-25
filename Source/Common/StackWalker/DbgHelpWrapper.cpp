@@ -2,7 +2,9 @@
 #include "DbgHelpWrapper.h"
 
 DbgHelpWrapper::DbgHelpWrapper()
+:hDbhHelpDLL_(NULL)
 {
+	ZeroMember();
 	InitFunc();
 }
 
@@ -20,6 +22,7 @@ DbgHelpWrapper::~DbgHelpWrapper()
 
 		RESET_Member(SymFunctionTableAccess64);
 
+		RESET_Member(SymFromAddr);
 		RESET_Member(SymGetLineFromAddr64);
 		RESET_Member(SymGetSymFromAddr64);
 		RESET_Member(SymGetModuleInfo64);
@@ -55,6 +58,7 @@ void DbgHelpWrapper::InitFunc()
 
 		SET_Member(SymFunctionTableAccess64);
 
+		SET_Member(SymFromAddr);
 		SET_Member(SymGetLineFromAddr64);
 		SET_Member(SymGetSymFromAddr64);
 		SET_Member(SymGetModuleInfo64);
