@@ -4,7 +4,7 @@
 DbgHelpWrapper::DbgHelpWrapper()
 :hDbhHelpDLL_(NULL)
 {
-	ZeroMember();
+	ZeroMemberRange(StackWalk64,SymSetSearchPath);
 	InitFunc();
 }
 

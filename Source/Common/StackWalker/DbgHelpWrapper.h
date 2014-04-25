@@ -31,6 +31,15 @@ do																									\
 	memset(begin,0,end - begin);																	\
 } while(0)
 
+#define ZeroMemberRange(member1,member2)															\
+do																									\
+{																									\
+	BYTE * begin = StaticCast<BYTE*>(&this->##member1);												\
+	BYTE * end   = StaticCast<BYTE*>(&this->##member2 ) + sizeof(this->##member2);					\
+	memset(begin,0,end - begin);																	\
+} while(0)
+
+
 
 namespace DbgHelp
 {
@@ -83,7 +92,6 @@ private:
 	void	InitFunc();
 	HMODULE hDbhHelpDLL_;
 public:
-	ZeroMemberBegin();
 	DECLARE_Member(StackWalk64);
 
 	DECLARE_Member(SymInitialize);
@@ -106,5 +114,4 @@ public:
 
 	DECLARE_Member(SymGetSearchPath);
 	DECLARE_Member(SymSetSearchPath);
-	ZeroMemberEnd();
 };
