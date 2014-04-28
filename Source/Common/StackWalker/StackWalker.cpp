@@ -4,6 +4,9 @@
 #include <dbghelp.h>
 #include <Psapi.h>
 #include <iostream>
+#include <fstream>
+#include <Include/Common/UtilFile.h>
+#include <memory>
 using namespace std;
 
 #pragma comment(lib,"Psapi.lib")
@@ -29,27 +32,41 @@ namespace
 {
 	struct  StackWalkerCallbackDefault:public StackWalkerCallback
 	{
-		virtual void PrintLineInfo(PCHAR szFileName,DWORD dwLine,PCHAR szFuncName,DWORD64 dwAddr,DWORD64 dwRVAOffset,PCHAR szModuleName)
+		StackWalkerCallbackDefault()
+		{
+			ofs.open((LPCTSTR)(Util::File::GetExeDir() +_T("\\stack.log")),ios_base::out|ios_base::app);
+		}
+		virtual void BeginDump()
+		{
+			ofs<<"Begin-------------------------------"<<endl;
+		}
+		virtual void EndDump()
+		{
+			ofs<<"End-------------------------------"<<endl;
+		}
+
+		virtual void PrintLineInfo(DWORD dwIndex,PCHAR szFileName,DWORD dwLine,PCHAR szFuncName,DWORD64 dwAddr,DWORD64 dwRVAOffset,PCHAR szModuleName)
 		{
 			CHAR szLineInfo[MAX_PATH + 512];
-			sprintf_s(szLineInfo,sizeof(szLineInfo)/sizeof(szLineInfo[0]),"0x%08I64x[0x%06I64x] %s:%s",dwAddr,dwRVAOffset,szModuleName,szFuncName);
+			sprintf_s(szLineInfo,sizeof(szLineInfo)/sizeof(szLineInfo[0]),"0x%02x  0x%08I64x[0x%06I64x] %s:%s",dwIndex,dwAddr,dwRVAOffset,szModuleName,szFuncName);
 
 			if (NULL == szFileName)
 			{
-				cout<<szLineInfo<<endl;
+				ofs<<szLineInfo<<endl;
 				OutputDebugStringA(szLineInfo);
 				OutputDebugStringA("\n");
 			}
 			else
 			{
-				cout<<szLineInfo<<" "<<szFileName<<"("<<dwLine<<")"<<endl;
+				ofs<<szLineInfo<<" "<<szFileName<<"("<<dwLine<<")"<<endl;
 				CHAR szFullLineInfo[MAX_PATH + 32];
 				sprintf_s(szFullLineInfo,sizeof(szFullLineInfo)/sizeof(szFullLineInfo[0]),"%s(%d):  %s\n",szFileName,dwLine,szLineInfo);
 				OutputDebugStringA(szFullLineInfo);
 			}
 		}
+		ofstream ofs;
 	};
-	StackWalkerCallbackDefault s_oStackWalkerCallback;
+	auto_ptr<StackWalkerCallbackDefault> s_pStackWalkerCallback;
 }
 StackWalker::StackWalker()
 {
@@ -124,7 +141,11 @@ void StackWalker::DumpStack(StackWalkerCallback * pCallback ,DWORD dwMaxDump,CON
 	pCallback_= pCallback;
 	if (NULL == pCallback)
 	{
-		pCallback_ = &s_oStackWalkerCallback;
+		if (s_pStackWalkerCallback.get() == NULL)
+		{
+			s_pStackWalkerCallback.reset(new StackWalkerCallbackDefault());
+		}
+		pCallback_ = s_pStackWalkerCallback.get();
 	}
 
 	DWORD const dwBeginDump = 1;
@@ -141,6 +162,7 @@ void StackWalker::DumpStack(StackWalkerCallback * pCallback ,DWORD dwMaxDump,CON
 	InitStackFrame(pContext,imageType,stackFrame);
 
 	dwMaxDump = dwBeginDump + dwMaxDump;
+	pCallback_->BeginDump();
 	for (DWORD frameNum = 0; frameNum < dwMaxDump; ++frameNum )
 	{
 		if ( ! oDbgHelper_.StackWalk64(imageType, GetCurrentProcess(), GetCurrentThread(), &stackFrame, pContext, NULL, oDbgHelper_.SymFunctionTableAccess64, oDbgHelper_.SymGetModuleBase64, NULL) )
@@ -155,13 +177,14 @@ void StackWalker::DumpStack(StackWalkerCallback * pCallback ,DWORD dwMaxDump,CON
 		}
 		if (frameNum >= dwBeginDump)
 		{
-			PrintLineInfo(stackFrame.AddrPC.Offset);
+			PrintLineInfo(frameNum,stackFrame.AddrPC.Offset);
 		}		
 	}
+	pCallback_->EndDump();
 }
 
 
-void StackWalker::PrintLineInfo(DWORD64 dwAddr)
+void StackWalker::PrintLineInfo(DWORD dwIndex,DWORD64 dwAddr)
 {
 	BYTE pBuf[sizeof(IMAGEHLP_SYMBOL64) + STACKWALK_MAX_NAMELEN];
 	memset(pBuf,0,sizeof(pBuf));
@@ -185,22 +208,22 @@ void StackWalker::PrintLineInfo(DWORD64 dwAddr)
 			memset(&Line, 0, sizeof(Line));
 			Line.SizeOfStruct = sizeof(Line);
 
-			if (oDbgHelper_.SymGetLineFromAddr64(GetCurrentProcess(), dwAddr, &(offsetFromLine), &Line) != FALSE)
+			if (oDbgHelper_.SymGetLineFromAddr64(GetCurrentProcess(), dwAddr, &(offsetFromLine), &Line))
 			{
-				PrintLineInfo(Line.FileName,Line.LineNumber,pSym->Name,dwAddr);
+				PrintLineInfo(dwIndex,Line.FileName,Line.LineNumber,pSym->Name,dwAddr);
 			}
 			else
 			{
-				PrintLineInfo(NULL,NULL,pSym->Name,dwAddr);
+				PrintLineInfo(dwIndex,NULL,NULL,pSym->Name,dwAddr);
 			}
 		}
 	}
 	else
 	{
-		PrintLineInfo(NULL,NULL,NULL,dwAddr);
+		PrintLineInfo(dwIndex,NULL,NULL,NULL,dwAddr);
 	}	
 }
-void StackWalker::PrintLineInfo(PCHAR fileName,DWORD dwLine,PCHAR funcName,DWORD64 dwAddr)
+void StackWalker::PrintLineInfo(DWORD dwIndex,PCHAR fileName,DWORD dwLine,PCHAR funcName,DWORD64 dwAddr)
 {
 	if (funcName == NULL)
 	{
@@ -209,10 +232,10 @@ void StackWalker::PrintLineInfo(PCHAR fileName,DWORD dwLine,PCHAR funcName,DWORD
 	DWORD64 dwBaseAddr = oDbgHelper_.SymGetModuleBase64(GetCurrentProcess(),dwAddr);
 	DWORD64 dwRVAOffset = dwAddr - dwBaseAddr;
 	CHAR szModuleName[MAX_PATH];
+	memset(szModuleName,0,sizeof(szModuleName));
 	DWORD dwLen = GetModuleBaseNameA(GetCurrentProcess(),(HMODULE)dwBaseAddr,szModuleName,sizeof(szModuleName)/sizeof(szModuleName[0]));
-	szModuleName[dwLen] = '\0';
 
-	pCallback_->PrintLineInfo(fileName,dwLine,funcName,dwAddr,dwRVAOffset,szModuleName);
+	pCallback_->PrintLineInfo(dwIndex,fileName,dwLine,funcName,dwAddr,dwRVAOffset,szModuleName);
 }
 
 namespace Util
