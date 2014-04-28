@@ -1,6 +1,6 @@
 #pragma once
 #include <DbgHelp.h>
-
+#include <Include/Common/CommonDef.h>
 
 template<bool> struct StaticAssert_Failed;
 template<> struct StaticAssert_Failed<true>{};
@@ -81,7 +81,7 @@ namespace DbgHelp
 #define RESET_Member(pfnName)	this->##pfnName = NULL
 
 
-class DbgHelpWrapper
+class COMMON_API DbgHelpWrapper
 {
 public:
 	DbgHelpWrapper();
