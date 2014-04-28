@@ -2,6 +2,10 @@
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleTest", "ConsoleTest\ConsoleTest.vcproj", "{4B9D9290-BEF1-45DA-AD08-1DB6A2C17B31}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D48B0D28-6507-4418-866E-DACF6CD29AF3} = {D48B0D28-6507-4418-866E-DACF6CD29AF3}
+		{0B2D42D6-A8C0-4104-A284-E1CEBEBFF4B4} = {0B2D42D6-A8C0-4104-A284-E1CEBEBFF4B4}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Console", "Console\Console.vcproj", "{0B2D42D6-A8C0-4104-A284-E1CEBEBFF4B4}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -10,8 +14,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Console", "Console\Console.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowsTest", "WindowsTest\WindowsTest.vcproj", "{2EE0C625-4D20-4274-9399-E7D1A92FD34A}"
 	ProjectSection(ProjectDependencies) = postProject
-		{0B2D42D6-A8C0-4104-A284-E1CEBEBFF4B4} = {0B2D42D6-A8C0-4104-A284-E1CEBEBFF4B4}
 		{D48B0D28-6507-4418-866E-DACF6CD29AF3} = {D48B0D28-6507-4418-866E-DACF6CD29AF3}
+		{0B2D42D6-A8C0-4104-A284-E1CEBEBFF4B4} = {0B2D42D6-A8C0-4104-A284-E1CEBEBFF4B4}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcproj", "{D48B0D28-6507-4418-866E-DACF6CD29AF3}"

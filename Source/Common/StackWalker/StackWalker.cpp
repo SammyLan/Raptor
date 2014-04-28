@@ -5,196 +5,214 @@
 #include <Psapi.h>
 #include <iostream>
 using namespace std;
-#pragma comment(lib,"dbghelp.lib")
+
 #pragma comment(lib,"Psapi.lib")
 
 #ifdef COMMON_EXPORTS
 #include "Include/Common/DumpStack.h"
 #endif
 
-namespace{
-	BOOL CALLBACK ReadProcessMemoryProc64(  HANDLE hProcess,  DWORD64 lpBaseAddress, PVOID lpBuffer,  DWORD nSize,  LPDWORD lpNumberOfBytesRead)
-	{
-		return TRUE;
-	}
 
-	PVOID CALLBACK FunctionTableAccessProc64(  HANDLE hProcess,  DWORD64 AddrBase)
-	{
-		return SymFunctionTableAccess64(hProcess,AddrBase);
-	}
+DWORD const STACKWALK_MAX_NAMELEN = 1024;
+#define GET_CURRENT_CONTEXT(c, contextFlags)	\
+	do {										\
+	memset(&c, 0, sizeof(CONTEXT));				\
+	c.ContextFlags = contextFlags;				\
+	__asm    call x								\
+	__asm x: pop eax							\
+	__asm    mov c.Eip, eax						\
+	__asm    mov c.Ebp, ebp						\
+	__asm    mov c.Esp, esp						\
+	} while(0);
 
-	DWORD64 CALLBACK GetModuleBaseProc64(  HANDLE hProcess,  DWORD64 Address)
+namespace 
+{
+	struct  StackWalkerCallbackDefault:public StackWalkerCallback
 	{
-		return SymGetModuleBase64(hProcess,Address);
-	}
+		virtual void PrintLineInfo(PCHAR szFileName,DWORD dwLine,PCHAR szFuncName,DWORD64 dwAddr,DWORD64 dwRVAOffset,PCHAR szModuleName)
+		{
+			CHAR szLineInfo[MAX_PATH + 512];
+			sprintf_s(szLineInfo,sizeof(szLineInfo)/sizeof(szLineInfo[0]),"0x%08I64x[0x%06I64x] %s:%s",dwAddr,dwRVAOffset,szModuleName,szFuncName);
 
-	DWORD64 CALLBACK TranslateAddressProc64(  HANDLE hProcess,  HANDLE hThread,LPADDRESS64 lpaddr)
-	{
-		return 0;
-	}
+			if (NULL == szFileName)
+			{
+				cout<<szLineInfo<<endl;
+				OutputDebugStringA(szLineInfo);
+				OutputDebugStringA("\n");
+			}
+			else
+			{
+				cout<<szLineInfo<<" "<<szFileName<<"("<<dwLine<<")"<<endl;
+				CHAR szFullLineInfo[MAX_PATH + 32];
+				sprintf_s(szFullLineInfo,sizeof(szFullLineInfo)/sizeof(szFullLineInfo[0]),"%s(%d):  %s\n",szFileName,dwLine,szLineInfo);
+				OutputDebugStringA(szFullLineInfo);
+			}
+		}
+	};
+	StackWalkerCallbackDefault s_oStackWalkerCallback;
 }
-
-
-StackWalker::StackWalker(CONTEXT * pContext)
-:pContext_(pContext)
-{	
+StackWalker::StackWalker()
+{
 	hProcess_ = GetCurrentProcess();
 	hThread_ = GetCurrentThread();
-	SaveStackInfo();
+	InitSymbol();
 }
 
 StackWalker::~StackWalker()
-{ 
+{
+	UnInitSymbol();
 }
- 
 void StackWalker::InitSymbol()
 {
-	if(!SymInitialize(hProcess_,NULL,TRUE))
+	if(!oDbgHelper_.SymInitialize(hProcess_,NULL,TRUE))
 	{
 		cout<<"Failed"<<endl;
 	}
-	DWORD symOptions = SymGetOptions();
-	symOptions |= SYMOPT_LOAD_LINES;
-	symOptions |= SYMOPT_FAIL_CRITICAL_ERRORS;
-	SymSetOptions(symOptions);
-
+	DWORD symOptions = oDbgHelper_.SymGetOptions();
+	symOptions |= (SYMOPT_LOAD_LINES | SYMOPT_FAIL_CRITICAL_ERRORS);
+	oDbgHelper_.SymSetOptions(symOptions);
 }
+
 
 void StackWalker::UnInitSymbol()
 {
-	if(!SymCleanup(hProcess_))
+	if(!oDbgHelper_.SymCleanup(hProcess_))
 	{
 		cout<<"Failed"<<endl;
 	}
 }
-void StackWalker::SaveStackInfo()
+void StackWalker::InitStackFrame(CONTEXT * pContext,DWORD & dwMachineType,STACKFRAME64 & stackFrame)
 {
-	STACKFRAME64 stackFrame; 
 	memset(&stackFrame, 0, sizeof(stackFrame));
-	DWORD imageType;
+	
 #ifdef _M_IX86
 	// normally, call ImageNtHeader() and use machine info from PE header
-	imageType = IMAGE_FILE_MACHINE_I386;
-	stackFrame.AddrPC.Offset = pContext_->Eip;
+	dwMachineType = IMAGE_FILE_MACHINE_I386;
+	stackFrame.AddrPC.Offset = pContext->Eip;
 	stackFrame.AddrPC.Mode = AddrModeFlat;
-	stackFrame.AddrFrame.Offset = pContext_->Ebp;
+	stackFrame.AddrFrame.Offset = pContext->Ebp;
 	stackFrame.AddrFrame.Mode = AddrModeFlat;
-	stackFrame.AddrStack.Offset = pContext_->Esp;
+	stackFrame.AddrStack.Offset = pContext->Esp;
 	stackFrame.AddrStack.Mode = AddrModeFlat;
 #elif _M_X64
-	imageType = IMAGE_FILE_MACHINE_AMD64;
-	stackFrame.AddrPC.Offset = pContext_->Rip;
+	dwMachineType = IMAGE_FILE_MACHINE_AMD64;
+	stackFrame.AddrPC.Offset = pContext->Rip;
 	stackFrame.AddrPC.Mode = AddrModeFlat;
-	stackFrame.AddrFrame.Offset = pContext_->Rsp;
+	stackFrame.AddrFrame.Offset = pContext->Rsp;
 	stackFrame.AddrFrame.Mode = AddrModeFlat;
-	stackFrame.AddrStack.Offset = pContext_->Rsp;
+	stackFrame.AddrStack.Offset = pContext->Rsp;
 	stackFrame.AddrStack.Mode = AddrModeFlat;
 #elif _M_IA64
-	imageType = IMAGE_FILE_MACHINE_IA64;
-	stackFrame.AddrPC.Offset = pContext_->StIIP;
+	dwMachineType = IMAGE_FILE_MACHINE_IA64;
+	stackFrame.AddrPC.Offset = pContext->StIIP;
 	stackFrame.AddrPC.Mode = AddrModeFlat;
-	stackFrame.AddrFrame.Offset = pContext_->IntSp;
+	stackFrame.AddrFrame.Offset = pContext->IntSp;
 	stackFrame.AddrFrame.Mode = AddrModeFlat;
-	stackFrame.AddrBStore.Offset = pContext_->RsBSP;
+	stackFrame.AddrBStore.Offset = pContext->RsBSP;
 	stackFrame.AddrBStore.Mode = AddrModeFlat;
-	stackFrame.AddrStack.Offset = pContext_->IntSp;
+	stackFrame.AddrStack.Offset = pContext->IntSp;
 	stackFrame.AddrStack.Mode = AddrModeFlat;
 #else
 #error "Platform not supported!"
 #endif
 
+} 
 
-	int dwSize = 30;
-	for (int i = 0; i < dwSize; ++i)
+
+void StackWalker::DumpStack(StackWalkerCallback * pCallback ,DWORD dwMaxDump,CONTEXT * pContext)
+{
+	pCallback_= pCallback;
+	if (NULL == pCallback)
 	{
-		if(!StackWalk64(imageType,hProcess_,hThread_,&stackFrame, pContext_,NULL/*ReadProcessMemoryProc64*/,FunctionTableAccessProc64, GetModuleBaseProc64,NULL/*TranslateAddressProc64*/))
-		{
-			break;			 
-		}
+		pCallback_ = &s_oStackWalkerCallback;
+	}
 
-		if (stackFrame.AddrPC.Offset == stackFrame.AddrReturn.Offset
-			||stackFrame.AddrPC.Offset == 0)
+	DWORD const dwBeginDump = 1;
+	CONTEXT context;
+	if (NULL == pContext)
+	{
+		memset(&context,0,sizeof(context));
+		GET_CURRENT_CONTEXT(context,CONTEXT_FULL);
+		pContext = &context;
+	}
+
+	STACKFRAME64 stackFrame;
+	DWORD imageType = 0;
+	InitStackFrame(pContext,imageType,stackFrame);
+
+	dwMaxDump = dwBeginDump + dwMaxDump;
+	for (DWORD frameNum = 0; frameNum < dwMaxDump; ++frameNum )
+	{
+		if ( ! oDbgHelper_.StackWalk64(imageType, GetCurrentProcess(), GetCurrentThread(), &stackFrame, pContext, NULL, oDbgHelper_.SymFunctionTableAccess64, oDbgHelper_.SymGetModuleBase64, NULL) )
+		{
+			//错误
+			break;
+		}
+		
+		if (stackFrame.AddrFrame.Offset == 0 || stackFrame.AddrPC.Offset == stackFrame.AddrReturn.Offset || stackFrame.AddrPC.Offset == 0 || stackFrame.AddrReturn.Offset == 0)
 		{
 			break;
 		}
-		callStack_.push_back(stackFrame.AddrPC.Offset);
+		if (frameNum >= dwBeginDump)
+		{
+			PrintLineInfo(stackFrame.AddrPC.Offset);
+		}		
 	}
 }
 
+
+void StackWalker::PrintLineInfo(DWORD64 dwAddr)
+{
+	BYTE pBuf[sizeof(IMAGEHLP_SYMBOL64) + STACKWALK_MAX_NAMELEN];
+	memset(pBuf,0,sizeof(pBuf));
+	IMAGEHLP_SYMBOL64 *pSym = (IMAGEHLP_SYMBOL64 *) pBuf;
+
+	pSym->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
+	pSym->MaxNameLength = STACKWALK_MAX_NAMELEN;
+
+	DWORD64 offsetFromSmybol;
+	if (oDbgHelper_.SymGetSymFromAddr64(GetCurrentProcess(), dwAddr, &(offsetFromSmybol), pSym) != FALSE)
+	{
+		CHAR szName[STACKWALK_MAX_NAMELEN];
+		oDbgHelper_.UnDecorateSymbolName( pSym->Name, szName, STACKWALK_MAX_NAMELEN, UNDNAME_NAME_ONLY );
+
+		oDbgHelper_.UnDecorateSymbolName( pSym->Name, szName, STACKWALK_MAX_NAMELEN, UNDNAME_COMPLETE );
+
+		if (oDbgHelper_.SymGetLineFromAddr64 != NULL )
+		{ 
+			DWORD offsetFromLine;
+			IMAGEHLP_LINE64 Line;
+			memset(&Line, 0, sizeof(Line));
+			Line.SizeOfStruct = sizeof(Line);
+
+			if (oDbgHelper_.SymGetLineFromAddr64(GetCurrentProcess(), dwAddr, &(offsetFromLine), &Line) != FALSE)
+			{
+				PrintLineInfo(Line.FileName,Line.LineNumber,pSym->Name,dwAddr);
+			}
+			else
+			{
+				PrintLineInfo(NULL,NULL,pSym->Name,dwAddr);
+			}
+		}
+	}
+	else
+	{
+		PrintLineInfo(NULL,NULL,NULL,dwAddr);
+	}	
+}
 void StackWalker::PrintLineInfo(PCHAR fileName,DWORD dwLine,PCHAR funcName,DWORD64 dwAddr)
 {
 	if (funcName == NULL)
 	{
 		funcName = "<unknown>";
 	}
-	DWORD64 dwBaseAddr = SymGetModuleBase64(hProcess_,dwAddr);
+	DWORD64 dwBaseAddr = oDbgHelper_.SymGetModuleBase64(GetCurrentProcess(),dwAddr);
 	DWORD64 dwRVAOffset = dwAddr - dwBaseAddr;
-	TCHAR szModuleName[MAX_PATH];
-	DWORD dwLen = GetModuleBaseName(hProcess_,(HMODULE)dwBaseAddr,szModuleName,sizeof(szModuleName)/sizeof(szModuleName[0]));
+	CHAR szModuleName[MAX_PATH];
+	DWORD dwLen = GetModuleBaseNameA(GetCurrentProcess(),(HMODULE)dwBaseAddr,szModuleName,sizeof(szModuleName)/sizeof(szModuleName[0]));
 	szModuleName[dwLen] = '\0';
 
-
-	CHAR szLineInfo[MAX_PATH + 512];
-	sprintf_s(szLineInfo,sizeof(szLineInfo)/sizeof(szLineInfo[0]),"0x%08I64x[0x%06I64x] %S:%s",dwAddr,dwRVAOffset,szModuleName,funcName);
-
-	if (NULL == fileName)
-	{
-		cout<<szLineInfo<<endl;
-		OutputDebugStringA(szLineInfo);
-		OutputDebugStringA("\n");
-	}
-	else
-	{
-		cout<<szLineInfo<<" "<<fileName<<"("<<dwLine<<")"<<endl;
-		CHAR szFullLineInfo[MAX_PATH + 32];
-		sprintf_s(szFullLineInfo,sizeof(szFullLineInfo)/sizeof(szFullLineInfo[0]),"%s(%d):  %s\n",fileName,dwLine,szLineInfo);
-		OutputDebugStringA(szFullLineInfo);
-	}
-}
-
-void StackWalker::DumpStack()
-{
-	InitSymbol();
-	for (size_t i = 2; i < callStack_.size();++i)
-	{
-		DWORD64 dwAddr = callStack_[i];
-
-		//获取函数名
-		DWORD64  dwDisplacement = 0;
-		ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME*sizeof(TCHAR) +	sizeof(ULONG64) - 1) /	sizeof(ULONG64)];
-		PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)buffer;
-
-		pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-		pSymbol->MaxNameLen = MAX_SYM_NAME;
-
-		if (SymFromAddr(hProcess_, dwAddr, &dwDisplacement, pSymbol))
-		{
-			IMAGEHLP_LINE64 lineInfo;
-			lineInfo.SizeOfStruct =  sizeof(IMAGEHLP_LINE64);
-			DWORD dwLineDisplacement;
-			if( SymGetLineFromAddr64( hProcess_, dwAddr, &dwLineDisplacement, &lineInfo ))
-			{
-				PrintLineInfo(lineInfo.FileName,lineInfo.LineNumber,pSymbol->Name,dwAddr);
-			}
-			else
-			{
-				PrintLineInfo(NULL,0,pSymbol->Name,dwAddr);
-			}
-		}
-		else
-		{
-			PrintLineInfo(NULL,0,NULL,dwAddr);
-		}		
-	}
-	UnInitSymbol();
-}
-
-DWORD AssertionExceptionDump(PEXCEPTION_POINTERS Exception)
-{
-	StackWalker walker(Exception->ContextRecord);
-	walker.DumpStack();
-
-	return EXCEPTION_EXECUTE_HANDLER;
+	pCallback_->PrintLineInfo(fileName,dwLine,funcName,dwAddr,dwRVAOffset,szModuleName);
 }
 
 namespace Util
@@ -203,15 +221,11 @@ namespace Util
 	{
 		void DumpStack()
 		{
-			__try
-			{
-				//使用RtlCaptureContext获取上下文不靠谱,优化后就不能获取到正确的上下文,改用SEH获取
-				RaiseException(0x1234, 0, 0, NULL);
-			}
-			__except(AssertionExceptionDump(GetExceptionInformation()))
-			{
-				return;
-			}
+			StackWalker walker;
+			CONTEXT c;
+			memset(&c,0,sizeof(c));
+			GET_CURRENT_CONTEXT(c,CONTEXT_FULL);			
+			walker.DumpStack(NULL,20,&c);
 		}
 	}
 }

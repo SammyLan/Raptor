@@ -1,22 +1,31 @@
 #pragma once
 #include <vector>
+#include <Include/Common/CommonDef.h>
+#include "DbgHelpWrapper.h"
+
 using std::vector;
-class StackWalker
+
+struct  StackWalkerCallback
+{
+	virtual void PrintLineInfo(PCHAR fileName,DWORD dwLine,PCHAR funcName,DWORD64 dwAddr,DWORD64 dwRVAOffset,PCHAR moduleName) = 0; 
+};
+
+class COMMON_API StackWalker
 {
 public:
-	StackWalker(CONTEXT * pContext);
+	StackWalker();
 	~StackWalker();
-	void DumpStack();
-protected:
-	virtual void PrintLineInfo(PCHAR fileName,DWORD dwLine, PCHAR funcName,DWORD64 dwAddr);
+	void DumpStack(StackWalkerCallback * pCallback = NULL,DWORD dwMaxDump = 20,CONTEXT * pContext = NULL);
 private:
-	void SaveStackInfo();
 	void InitSymbol();
 	void UnInitSymbol();
+	static void InitStackFrame(CONTEXT * pContext,DWORD & dwMachineType,STACKFRAME64 & stackFrame);
+	void PrintLineInfo(DWORD64 dwAddr);
+	void PrintLineInfo(PCHAR fileName,DWORD dwLine,PCHAR funcName,DWORD64 dwAddr);
 private:
+	DbgHelpWrapper			oDbgHelper_;
+	StackWalkerCallback *	pCallback_;
 	HANDLE hProcess_;
 	HANDLE hThread_;
-	CONTEXT * pContext_;
-	vector<DWORD64> callStack_;
 };
 
