@@ -242,11 +242,31 @@
 				>
 			</File>
 			<File
+				RelativePath=".\StackWalker\StackWalker3rd.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StackWalker\StackWalker3rd.h"
+				>
+			</File>
+			<File
 				RelativePath=".\StackWalker\StackWalkerEx.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\StackWalker\StackWalkerEx.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="File"
+			>
+			<File
+				RelativePath=".\UtilFile.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\Include\Common\UtilFile.h"
 				>
 			</File>
 		</Filter>

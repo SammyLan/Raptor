@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="StackWalker">
+      <UniqueIdentifier>{120acdc3-39b4-4b16-873d-bd043609ee5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File">
+      <UniqueIdentifier>{e9bd40f8-d9f9-4026-9144-76e1941618ef}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Common.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="StackWalker\DbgHelpWrapper.cpp">
+      <Filter>StackWalker</Filter>
+    </ClCompile>
+    <ClCompile Include="StackWalker\StackWalker.cpp">
+      <Filter>StackWalker</Filter>
+    </ClCompile>
+    <ClCompile Include="StackWalker\StackWalker3rd.cpp">
+      <Filter>StackWalker</Filter>
+    </ClCompile>
+    <ClCompile Include="StackWalker\StackWalkerEx.cpp">
+      <Filter>StackWalker</Filter>
+    </ClCompile>
+    <ClCompile Include="UtilFile.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\CommonDef.h">
+      <Filter>StackWalker</Filter>
+    </ClInclude>
+    <ClInclude Include="StackWalker\DbgHelpWrapper.h">
+      <Filter>StackWalker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\DumpStack.h">
+      <Filter>StackWalker</Filter>
+    </ClInclude>
+    <ClInclude Include="StackWalker\StackWalker.h">
+      <Filter>StackWalker</Filter>
+    </ClInclude>
+    <ClInclude Include="StackWalker\StackWalker3rd.h">
+      <Filter>StackWalker</Filter>
+    </ClInclude>
+    <ClInclude Include="StackWalker\StackWalkerEx.h">
+      <Filter>StackWalker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\UtilFile.h">
+      <Filter>File</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+</Project>

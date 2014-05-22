@@ -23,12 +23,12 @@ protected:
 	void ConsoleReadThreadProc();
 	void ProcessCmd(CString const & strCmd);
 	static BOOL WINAPI HandlerRoutine(  DWORD dwCtrlType);
+	void SaveStartPos();
 private:
 	HANDLE	hStdIn_;			//标准输入
 	HANDLE	hStdOut_;			//标准输出
 	HANDLE	hConsoleReadThread_;//读取标准输入线程
 	COORD	startPos_;//输入的开始位置
 	BOOL	bConsoleReadThreadCont_;	//读取线程是否要继续运行
-	BOOL	bReading_;			//正在读
 	static auto_ptr<CConsoleWnd> s_pConsolWnd;
 };

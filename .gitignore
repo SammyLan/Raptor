@@ -30,3 +30,7 @@
 /Output/release/*.lib
 
 /Output/release/*.exp
+
+/Source/*.opensdf
+
+/Source/*.sdf
